@@ -13,21 +13,32 @@ import java.net.*;
  * @author yoannlathuiliere
  */
 public class Connexion {
+    // Variables
     private Socket socket;
-    
+    private String ip;
+    private int port;
     private static class ConnexionHolder{
         private static final Connexion instance = new Connexion();
     }
-
+    
+    // Methods
+    private Connexion() {}
+    
     public static Connexion getInstance(){
             return ConnexionHolder.instance;
     }
-        
-    private Connexion() {}
     
-    public Socket connect(String ip, int port) {
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+    
+    public void setPort(String port) {
+        this.port = Integer.parseInt(port);
+    }
+    
+    public Socket connect() {
         try {
-            socket = new Socket(ip, port);
+            socket = new Socket(this.ip, this.port);
             return socket;
         } catch (SocketException e) {
             e.printStackTrace();

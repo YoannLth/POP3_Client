@@ -5,12 +5,18 @@
  */
 package pop3_client;
 
+import java.awt.Color;
+import java.net.Socket;
+import pop3_client.Model.Client;
+import pop3_client.Model.Connexion;
+
 /**
  *
  * @author yoannlathuiliere
  */
 public class POP3ClientMainFrame extends javax.swing.JFrame {
-
+    Client client;
+    Socket s;
     /**
      * Creates new form Main
      */
@@ -36,7 +42,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         userTextField = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         passwordTextField = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        connectUserPasswordButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         outputTextView = new javax.swing.JTextArea();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -85,8 +91,13 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton1.setText("connexion");
-        jButton1.setEnabled(false);
+        connectUserPasswordButton.setText("connexion");
+        connectUserPasswordButton.setEnabled(false);
+        connectUserPasswordButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                connectUserPasswordButtonActionPerformed(evt);
+            }
+        });
 
         outputTextView.setEditable(false);
         outputTextView.setColumns(20);
@@ -152,7 +163,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(connectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(connectUserPasswordButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(14, 14, 14))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -180,7 +191,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
                     .addComponent(userTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4)
                     .addComponent(passwordTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
+                    .addComponent(connectUserPasswordButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -200,9 +211,44 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_portTextFieldActionPerformed
 
     private void connectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectButtonActionPerformed
-        // TODO add your handling code here:
+        Connexion co = Connexion.getInstance();
+        co.setIp(serverTextField.getText());
+        co.setPort(portTextField.getText());
+        this.s = co.connect();
+ 
+        if(s != null) {
+            serverTextField.setEnabled(false);
+            portTextField.setEnabled(false);
+            connectButton.setEnabled(false);
+            
+            userTextField.setEnabled(true);
+            passwordTextField.setEnabled(true);
+            connectUserPasswordButton.setEnabled(true);
+            
+            this.client = new Client(s);
+            
+            writeServerResponse(client.readMessage());            
+        } else {
+            writeError("La connexion à échoué");
+        }
     }//GEN-LAST:event_connectButtonActionPerformed
 
+    private void writeServerResponse(String response) {
+        outputTextView.append("[SERVER] : " + response + "\n");
+    }
+    
+    private void writeError(String msg) {
+        outputTextView.append("[ERROR] : " + msg + "\n");
+    }
+    
+    public void sendRequest(String command) {
+        
+        client.sendCommande(s, command);
+        
+        String message = client.readMessage();
+        writeServerResponse(message);
+    }
+    
     private void passwordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passwordTextFieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_passwordTextFieldActionPerformed
@@ -210,6 +256,15 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     private void userTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userTextFieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_userTextFieldActionPerformed
+
+    private void connectUserPasswordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectUserPasswordButtonActionPerformed
+        if ((!userTextField.getText().equals("")) && (!passwordTextField.getText().equals(""))) {
+            String user = userTextField.getText();
+            String pass = passwordTextField.getText();
+            
+            sendRequest("APOP " + user + " " + "pass");
+        }
+    }//GEN-LAST:event_connectUserPasswordButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -249,7 +304,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton connectButton;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton connectUserPasswordButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
