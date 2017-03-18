@@ -43,18 +43,18 @@ public class Client {
         {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
-        /*try {
-            output.writeUTF(cmd);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
     }
 
     public String readMessage() {
         try {
             InputStreamReader r = new InputStreamReader(input);  // Création d'un buffer à partir du la requête
             BufferedReader br = new BufferedReader(r); // Création d'un buffer à partir du la requête
-            return br.readLine(); // Lit la première ligne de la requête
+            
+            if (br.ready()) {
+                return br.readLine(); // Lit la première ligne de la requête
+            } else {
+                return null;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

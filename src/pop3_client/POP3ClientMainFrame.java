@@ -6,6 +6,7 @@
 package pop3_client;
 
 import java.awt.Color;
+import static java.lang.Thread.sleep;
 import java.net.Socket;
 import pop3_client.Model.Client;
 import pop3_client.Model.Connexion;
@@ -227,13 +228,14 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
             
             this.client = new Client(s);
             
-            writeServerResponse(client.readMessage());            
+            //this.listenMessages();
+            //writeServerResponse(client.readMessage());            
         } else {
             writeError("La connexion à échoué");
         }
     }//GEN-LAST:event_connectButtonActionPerformed
 
-    private void writeServerResponse(String response) {
+    public void writeServerResponse(String response) {
         outputTextView.append("[SERVER] : " + response + "\n");
     }
     
@@ -242,11 +244,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     }
     
     public void sendRequest(String command) {
-        
         client.sendCommande(s, command);
-        
-        String message = client.readMessage();
-        writeServerResponse(message);
     }
     
     private void passwordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passwordTextFieldActionPerformed
