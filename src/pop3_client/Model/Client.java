@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.logging.Level;
@@ -37,7 +38,7 @@ public class Client {
         {
             byte[] message = new byte[cmd.getBytes().length];
             System.arraycopy(cmd.getBytes(), 0, message, 0, cmd.getBytes().length);
-            s.getOutputStream().write(message);
+            output.write(message);
         } 
         catch (IOException ex)
         {
@@ -46,18 +47,17 @@ public class Client {
     }
 
     public String readMessage() {
-        try {
-            InputStreamReader r = new InputStreamReader(input);  // Création d'un buffer à partir du la requête
+        String rep = "";
+        
+        try {           
+            InputStream is = this.input; // Récupère la requete du client
+            InputStreamReader r = new InputStreamReader(is);  // Création d'un buffer à partir du la requête
             BufferedReader br = new BufferedReader(r); // Création d'un buffer à partir du la requête
-            
-            if (br.ready()) {
-                return br.readLine(); // Lit la première ligne de la requête
-            } else {
-                return null;
-            }
+            rep = br.readLine(); // Lit la première ligne de la requête
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "";
+        
+        return rep;
     }
 }

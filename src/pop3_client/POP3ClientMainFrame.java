@@ -228,8 +228,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
             
             this.client = new Client(s);
             
-            //this.listenMessages();
-            //writeServerResponse(client.readMessage());            
+            writeServerResponse(client.readMessage());
         } else {
             writeError("La connexion à échoué");
         }
@@ -260,7 +259,8 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
             String user = userTextField.getText();
             String pass = passwordTextField.getText();
             
-            sendRequest("APOP " + user + " " + "pass");
+            sendRequest("APOP " + user + " " + pass);
+            writeServerResponse(client.readMessage());
         }
     }//GEN-LAST:event_connectUserPasswordButtonActionPerformed
 

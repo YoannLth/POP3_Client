@@ -17,15 +17,6 @@ public class POP3_Client {
     public static void main(String[] args) {
         POP3ClientMainFrame frame = new POP3ClientMainFrame();
         frame.setVisible(true);
-        
-        while (true) {
-            if(frame.client != null) {
-               String msg = frame.client.readMessage();
-                if(msg != null) {
-                    frame.writeServerResponse(msg);
-                } 
-            }
-        }
     }
     
 }
