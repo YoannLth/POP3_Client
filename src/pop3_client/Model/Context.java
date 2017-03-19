@@ -63,6 +63,7 @@ public class Context
     
     public void sendCommand(String cmd)
     {
+        cmd = cmd + "\n";
         try
         {
             byte[] message = new byte[cmd.getBytes().length];

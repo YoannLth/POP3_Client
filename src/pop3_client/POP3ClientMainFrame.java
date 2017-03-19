@@ -249,7 +249,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         if ((!userTextField.getText().equals("")) && (!passwordTextField.getText().equals(""))) {
             String user = userTextField.getText();
             String pass = passwordTextField.getText();
-            sendRequest("APOP " + user + " " + pass+"\n");
+            sendRequest("APOP " + user + " " + pass);
             //Context.getInstance().close();
             writeServerResponse(Context.getInstance().receiveCommand());
         }
