@@ -10,14 +10,13 @@ import static java.lang.Thread.sleep;
 import java.net.Socket;
 import pop3_client.Model.Client;
 import pop3_client.Model.Connexion;
+import pop3_client.Model.Context;
 
 /**
  *
  * @author yoannlathuiliere
  */
 public class POP3ClientMainFrame extends javax.swing.JFrame {
-    Client client;
-    Socket s;
     /**
      * Creates new form Main
      */
@@ -212,26 +211,18 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_portTextFieldActionPerformed
 
     private void connectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectButtonActionPerformed
-        Connexion co = Connexion.getInstance();
-        co.setIp(serverTextField.getText());
-        co.setPort(portTextField.getText());
-        this.s = co.connect();
- 
-        if(s != null) {
-            serverTextField.setEnabled(false);
-            portTextField.setEnabled(false);
-            connectButton.setEnabled(false);
-            
-            userTextField.setEnabled(true);
-            passwordTextField.setEnabled(true);
-            connectUserPasswordButton.setEnabled(true);
-            
-            this.client = new Client(s);
-            
-            writeServerResponse(client.readMessage());
-        } else {
-            writeError("La connexion à échoué");
-        }
+        Context.getInstance().setIp(serverTextField.getText());
+        Context.getInstance().setPort(Integer.parseInt(portTextField.getText()));
+        Context.getInstance().connect();
+        serverTextField.setEnabled(false);
+        portTextField.setEnabled(false);
+        connectButton.setEnabled(false);
+
+        userTextField.setEnabled(true);
+        passwordTextField.setEnabled(true);
+        connectUserPasswordButton.setEnabled(true);
+
+        writeServerResponse(Context.getInstance().receiveCommand());
     }//GEN-LAST:event_connectButtonActionPerformed
 
     public void writeServerResponse(String response) {
@@ -243,7 +234,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     }
     
     public void sendRequest(String command) {
-        client.sendCommande(s, command);
+        Context.getInstance().sendCommand(command);
     }
     
     private void passwordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passwordTextFieldActionPerformed
@@ -258,9 +249,9 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         if ((!userTextField.getText().equals("")) && (!passwordTextField.getText().equals(""))) {
             String user = userTextField.getText();
             String pass = passwordTextField.getText();
-            
-            sendRequest("APOP " + user + " " + pass);
-            writeServerResponse(client.readMessage());
+            sendRequest("APOP " + user + " " + pass+"\n");
+            //Context.getInstance().close();
+            writeServerResponse(Context.getInstance().receiveCommand());
         }
     }//GEN-LAST:event_connectUserPasswordButtonActionPerformed
 
