@@ -40,7 +40,6 @@ public class Client {
             byte[] message = new byte[cmd.getBytes().length];
             System.arraycopy(cmd.getBytes(), 0, message, 0, cmd.getBytes().length);
             s.getOutputStream().write(message);
-            System.out.println("Command sent");
         } 
         catch (IOException ex)
         {

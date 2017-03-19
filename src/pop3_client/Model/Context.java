@@ -23,6 +23,7 @@ public class Context
     private Socket socket;
     private int port;
     private String ip;
+    private String timestamp;
     private static Context instance;
     
     public static Context getInstance()
@@ -49,6 +50,16 @@ public class Context
         this.ip = ip;
     }
     
+    public void setTimestamp(String ts)
+    {
+        this.timestamp = ts;
+    }
+    
+    public String getTimestamp()
+    {
+        return this.timestamp;
+    }
+    
     public void connect()
     {
         try {
@@ -69,7 +80,6 @@ public class Context
             byte[] message = new byte[cmd.getBytes().length];
             System.arraycopy(cmd.getBytes(), 0, message, 0, cmd.getBytes().length);
             this.socket.getOutputStream().write(message);
-            System.out.println("Command sent");
         } 
         catch (IOException ex)
         {
@@ -85,11 +95,35 @@ public class Context
             InputStream is = this.socket.getInputStream(); // Récupère la requete du client
             InputStreamReader r = new InputStreamReader(is);  // Création d'un buffer à partir du la requête
             BufferedReader br = new BufferedReader(r); // Création d'un buffer à partir du la requête
-            rep = br.readLine(); // Lit la première ligne de la requête
+            rep += br.readLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
         
+        return rep;
+    }
+    
+    public String receiveRep(int bytes) {
+        String rep = "";
+        
+        try {           
+            InputStream is = this.socket.getInputStream(); // Récupère la requete du client
+            InputStreamReader r = new InputStreamReader(is);  // Création d'un buffer à partir du la requête
+            BufferedReader br = new BufferedReader(r); // Création d'un buffer à partir du la requête
+            
+            for(int i=0; i<bytes; i++) {
+                rep += (char) br.read();
+                
+            }
+            /*int character;
+            while((character = br.read()) != -1) {
+                rep += (char) character;
+            }*/
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        System.out.println(rep);
         return rep;
     }
     

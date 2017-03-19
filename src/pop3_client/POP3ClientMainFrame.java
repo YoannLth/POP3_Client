@@ -11,6 +11,9 @@ import java.net.Socket;
 import pop3_client.Model.Client;
 import pop3_client.Model.Connexion;
 import pop3_client.Model.Context;
+import pop3_client.utils.utils;
+import static pop3_client.utils.utils.getEncodedPassword;
+import static pop3_client.utils.utils.getNbBytes;
 
 /**
  *
@@ -221,19 +224,30 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         userTextField.setEnabled(true);
         passwordTextField.setEnabled(true);
         connectUserPasswordButton.setEnabled(true);
-
-        writeServerResponse(Context.getInstance().receiveCommand());
+        
+        String response = Context.getInstance().receiveCommand();
+        
+        if(!utils.isError(response)) {
+            Context.getInstance().setTimestamp(utils.getTimestamp(response));
+        }
+        
+        writeServerResponse(response);
     }//GEN-LAST:event_connectButtonActionPerformed
 
     public void writeServerResponse(String response) {
-        outputTextView.append("[SERVER] : " + response + "\n");
+        outputTextView.append("[SERVER] : " + response + "\n\n\n");
     }
     
     private void writeError(String msg) {
-        outputTextView.append("[ERROR] : " + msg + "\n");
+        outputTextView.append("[ERROR] : " + msg + "\n\n\n");
+    }
+    
+    private void writeClientCommand(String msg) {
+        outputTextView.append("[CLIENT] : " + msg + "\n\n\n");
     }
     
     public void sendRequest(String command) {
+        writeClientCommand(command);
         Context.getInstance().sendCommand(command);
     }
     
@@ -248,13 +262,65 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     private void connectUserPasswordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectUserPasswordButtonActionPerformed
         if ((!userTextField.getText().equals("")) && (!passwordTextField.getText().equals(""))) {
             String user = userTextField.getText();
-            String pass = passwordTextField.getText();
+            String pass = utils.getEncodedPassword(Context.getInstance().getTimestamp(), passwordTextField.getText());
+            
             sendRequest("APOP " + user + " " + pass);
-            //Context.getInstance().close();
-            writeServerResponse(Context.getInstance().receiveCommand());
+            
+            String response = Context.getInstance().receiveCommand();
+            
+            writeServerResponse(response);
+            
+            if(!utils.isError(response)){
+                userTextField.setEnabled(false);
+                passwordTextField.setEnabled(false);
+                connectUserPasswordButton.setEnabled(false);
+                launchStat();
+                launchList();
+            }   
         }
     }//GEN-LAST:event_connectUserPasswordButtonActionPerformed
 
+    public void launchStat() {
+        sendRequest("STAT");
+            
+        String response = Context.getInstance().receiveCommand();
+        writeServerResponse(response);
+    }
+    
+    public void launchList() {
+        sendRequest("LIST");
+            
+        String response = Context.getInstance().receiveCommand();
+        writeServerResponse(response);
+
+        if(!utils.isError(response)){
+            int nbMessages = utils.getNbMessages(response);
+            
+            for(int i = 1; i < nbMessages; i++) {
+                int nbBytes = launchList(i);
+                
+                launchRetr(i, nbBytes);
+            }
+        }
+    }
+    
+    public int launchList(int id) {
+        sendRequest("LIST " + id);
+            
+        String response = Context.getInstance().receiveCommand();
+        writeServerResponse(response);
+        int nbBytes = getNbBytes(response);
+        
+        return nbBytes;
+    }
+    
+    public void launchRetr(int id, int nbBytes) {
+        sendRequest("RETR " + id);
+            
+        String response = Context.getInstance().receiveRep(nbBytes);
+        writeServerResponse(response);
+    }
+    
     /**
      * @param args the command line arguments
      */
