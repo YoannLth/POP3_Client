@@ -8,12 +8,15 @@ package pop3_client;
 import java.awt.Color;
 import static java.lang.Thread.sleep;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.table.DefaultTableModel;
 import pop3_client.Model.Client;
 import pop3_client.Model.Connexion;
 import pop3_client.Model.Context;
 import pop3_client.utils.utils;
-import static pop3_client.utils.utils.getEncodedPassword;
-import static pop3_client.utils.utils.getNbBytes;
+import static pop3_client.utils.utils.*;
 
 /**
  *
@@ -109,8 +112,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
 
         mailsTableView.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null}
+
             },
             new String [] {
                 "From", "Object", "Details", "Date"
@@ -217,17 +219,17 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         Context.getInstance().setIp(serverTextField.getText());
         Context.getInstance().setPort(Integer.parseInt(portTextField.getText()));
         Context.getInstance().connect();
-        serverTextField.setEnabled(false);
-        portTextField.setEnabled(false);
-        connectButton.setEnabled(false);
-
-        userTextField.setEnabled(true);
-        passwordTextField.setEnabled(true);
-        connectUserPasswordButton.setEnabled(true);
         
         String response = Context.getInstance().receiveCommand();
         
         if(!utils.isError(response)) {
+            serverTextField.setEnabled(false);
+            portTextField.setEnabled(false);
+            connectButton.setEnabled(false);
+
+            userTextField.setEnabled(true);
+            passwordTextField.setEnabled(true);
+            connectUserPasswordButton.setEnabled(true);
             Context.getInstance().setTimestamp(utils.getTimestamp(response));
         }
         
@@ -296,29 +298,24 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         if(!utils.isError(response)){
             int nbMessages = utils.getNbMessages(response);
             
-            for(int i = 1; i < nbMessages; i++) {
-                int nbBytes = launchList(i);
-                
-                launchRetr(i, nbBytes);
-            }
+            for(int i = 1; i <= nbMessages; i++) {
+                launchRetr(i);
+            } 
         }
     }
     
-    public int launchList(int id) {
-        sendRequest("LIST " + id);
-            
-        String response = Context.getInstance().receiveCommand();
+    public void launchRetr(int id) {
+        sendRequest("RETR " + id);
+        String response = Context.getInstance().receiveRep();
         writeServerResponse(response);
-        int nbBytes = getNbBytes(response);
         
-        return nbBytes;
+        HashMap<String, String> infos = utils.parseRetr(response);
+        fillMailsTV(infos);
     }
     
-    public void launchRetr(int id, int nbBytes) {
-        sendRequest("RETR " + id);
-            
-        String response = Context.getInstance().receiveRep(nbBytes);
-        writeServerResponse(response);
+    public void fillMailsTV(HashMap <String, String> infos) {
+        DefaultTableModel model = (DefaultTableModel) mailsTableView.getModel();
+        model.addRow(new Object[]{infos.get("Expeditor"), infos.get("Object"), infos.get("Body"), infos.get("Date")});
     }
     
     /**

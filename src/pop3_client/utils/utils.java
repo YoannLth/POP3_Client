@@ -7,6 +7,8 @@ package pop3_client.utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,8 +29,10 @@ public abstract class utils {
     
     public static boolean isError(String response) {
         String[] words = response.split(" ");
+        String firstLine = words[0];
+        String[] flWords = firstLine.split(" ");
         
-        if(words[0] == "-ERR") {
+        if(flWords[0].equals("-ERR")) {
             return true;
         }
         
@@ -75,9 +79,27 @@ public abstract class utils {
         return nbMessages;
     }
     
-    public static int getNbBytes(String response) {
-        String[] words = response.split(" ");
-        int nbBytes = Integer.parseInt(words[2]);
-        return nbBytes;
+    public static HashMap<String,String> parseRetr(String mess) {
+        HashMap ret = new HashMap();
+        String lines[] = mess.split("\\r?\\n");
+        String[] exp = lines[1].split(" ");
+        
+        String dateFormated = lines[3].replace("Date: ","");
+        String object = lines[4].replace("Subject: ","");
+        String[] obj = object.split("\\(");
+        String objectFormated = obj[0];
+        
+        String body = "";
+        
+        for(int i = 6; i<lines.length; i++) {
+            body += lines[i];
+        }
+        
+        ret.put("Expeditor", exp[1]);
+        ret.put("Date", dateFormated);
+        ret.put("Object", objectFormated);
+        ret.put("Body", body);
+        
+        return ret;
     }
 }

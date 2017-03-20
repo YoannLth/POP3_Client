@@ -103,7 +103,7 @@ public class Context
         return rep;
     }
     
-    public String receiveRep(int bytes) {
+    public String receiveRep() {
         String rep = "";
         
         try {           
@@ -111,19 +111,16 @@ public class Context
             InputStreamReader r = new InputStreamReader(is);  // Création d'un buffer à partir du la requête
             BufferedReader br = new BufferedReader(r); // Création d'un buffer à partir du la requête
             
-            for(int i=0; i<bytes; i++) {
-                rep += (char) br.read();
-                
-            }
-            /*int character;
-            while((character = br.read()) != -1) {
-                rep += (char) character;
-            }*/
+            do {
+                String msg = br.readLine();
+                if(!msg.equals(".")) {
+                  rep += msg + "\n";  
+                }
+            } while(br.ready());
         } catch (IOException e) {
             e.printStackTrace();
         }
         
-        System.out.println(rep);
         return rep;
     }
     
