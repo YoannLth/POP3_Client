@@ -164,6 +164,11 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
             }
         });
         jScrollPane2.setViewportView(mailsTableView);
+        if (mailsTableView.getColumnModel().getColumnCount() > 0) {
+            mailsTableView.getColumnModel().getColumn(4).setMinWidth(0);
+            mailsTableView.getColumnModel().getColumn(4).setPreferredWidth(0);
+            mailsTableView.getColumnModel().getColumn(4).setMaxWidth(0);
+        }
 
         mailDetailsTextView.setEditable(false);
         mailDetailsTextView.setColumns(20);
