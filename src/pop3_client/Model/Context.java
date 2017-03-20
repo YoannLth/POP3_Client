@@ -27,6 +27,7 @@ public class Context
     private SSLSocket socket;
     private int port;
     private String ip;
+    private String timestamp;
     private static Context instance;
     
     public static Context getInstance()
@@ -53,6 +54,16 @@ public class Context
         this.ip = ip;
     }
     
+    public void setTimestamp(String ts)
+    {
+        this.timestamp = ts;
+    }
+    
+    public String getTimestamp()
+    {
+        return this.timestamp;
+    }
+    
     public void connect()
     {
         try {
@@ -74,7 +85,6 @@ public class Context
             byte[] message = new byte[cmd.getBytes().length];
             System.arraycopy(cmd.getBytes(), 0, message, 0, cmd.getBytes().length);
             this.socket.getOutputStream().write(message);
-            System.out.println("Command sent");
         } 
         catch (IOException ex)
         {
@@ -90,7 +100,28 @@ public class Context
             InputStream is = this.socket.getInputStream(); // Récupère la requete du client
             InputStreamReader r = new InputStreamReader(is);  // Création d'un buffer à partir du la requête
             BufferedReader br = new BufferedReader(r); // Création d'un buffer à partir du la requête
-            rep = br.readLine(); // Lit la première ligne de la requête
+            rep += br.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        return rep;
+    }
+    
+    public String receiveRep() {
+        String rep = "";
+        
+        try {           
+            InputStream is = this.socket.getInputStream(); // Récupère la requete du client
+            InputStreamReader r = new InputStreamReader(is);  // Création d'un buffer à partir du la requête
+            BufferedReader br = new BufferedReader(r); // Création d'un buffer à partir du la requête
+            
+            do {
+                String msg = br.readLine();
+                if(!msg.equals(".")) {
+                  rep += msg + "\n";  
+                }
+            } while(br.ready());
         } catch (IOException e) {
             e.printStackTrace();
         }
