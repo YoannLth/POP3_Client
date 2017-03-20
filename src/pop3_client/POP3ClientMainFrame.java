@@ -337,7 +337,9 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_connectUserPasswordButtonActionPerformed
 
     private void delButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_delButtonActionPerformed
-        int id = mailsTableView.getSelectedRow() + 1;
+        DefaultTableModel model = (DefaultTableModel) mailsTableView.getModel();
+
+        int id = Integer.parseInt(mailsTableView.getValueAt(mailsTableView.getSelectedRow(), 4).toString());
         delButton.setEnabled(false);
         
         launchDel(id);
@@ -352,6 +354,10 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
             
         String response = Context.getInstance().receiveCommand();
         writeServerResponse(response);
+        
+        if(!utils.isError(response)) {
+            resetButton.setText("Reset (0)");
+        }
     }
     
     public void launchList() {
@@ -396,7 +402,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
             model.removeRow(id - 1);
             
             String numberOnly= resetButton.getText().replaceAll("[^0-9]", "");
-            int nbOfDeletedMsg = Integer.parseInt(numberOnly);
+            int nbOfDeletedMsg = Integer.parseInt(numberOnly) + 1;
             
             resetButton.setText("Reset (" + nbOfDeletedMsg + ")");
         }
