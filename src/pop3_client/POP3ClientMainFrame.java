@@ -6,11 +6,16 @@
 package pop3_client;
 
 import java.awt.Color;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import static java.lang.Thread.sleep;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import pop3_client.Model.Client;
 import pop3_client.Model.Connexion;
@@ -28,6 +33,25 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
      */
     public POP3ClientMainFrame() {
         initComponents();
+        
+        mailsTableView.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+            public void valueChanged(ListSelectionEvent event) {
+                int id = mailsTableView.getSelectedRow() + 1;
+                mailDetailsTextView.setText(mailsInfos.get("" + id));
+                delButton.setEnabled(true);
+            }
+        });
+        
+        
+
+        this.addWindowListener(new WindowAdapter(){
+            public void windowClosing(WindowEvent e){
+                launchQuit();
+                System.exit(0);
+            }
+        });
+
+
     }
 
     /**
@@ -56,6 +80,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         jScrollPane3 = new javax.swing.JScrollPane();
         mailDetailsTextView = new javax.swing.JTextArea();
         jSeparator1 = new javax.swing.JSeparator();
+        delButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -140,6 +165,14 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         mailDetailsTextView.setRows(5);
         jScrollPane3.setViewportView(mailDetailsTextView);
 
+        delButton.setText("Delete");
+        delButton.setEnabled(false);
+        delButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                delButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -179,6 +212,9 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jSeparator1)
                         .addContainerGap())))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(delButton)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -201,6 +237,8 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(delButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -282,6 +320,14 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_connectUserPasswordButtonActionPerformed
 
+    private void delButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_delButtonActionPerformed
+        int id = mailsTableView.getSelectedRow() + 1;
+        //mailDetailsTextView.setText(mailsInfos.get("" + id));
+        delButton.setEnabled(false);
+        
+        launchDel(id);
+    }//GEN-LAST:event_delButtonActionPerformed
+
     public void launchStat() {
         sendRequest("STAT");
             
@@ -311,11 +357,37 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         
         HashMap<String, String> infos = utils.parseRetr(response);
         fillMailsTV(infos);
+        storeMailsInfos(id, response);
+    }
+    
+    public void launchDel(int id) {
+        sendRequest("DELE " + id);
+        String response = Context.getInstance().receiveRep();
+        writeServerResponse(response);
+    }
+    
+    public void launchQuit() {
+        sendRequest("QUIT");
     }
     
     public void fillMailsTV(HashMap <String, String> infos) {
         DefaultTableModel model = (DefaultTableModel) mailsTableView.getModel();
         model.addRow(new Object[]{infos.get("Expeditor"), infos.get("Object"), infos.get("Body"), infos.get("Date")});
+    }
+    
+    public void storeMailsInfos(int id, String rep) {
+        if(!utils.isError(rep)) {
+            String lines[] = rep.split("\\r?\\n");
+            String output = "";
+            for(int i = 1; i<lines.length; i++) {
+                output += lines[i] + "\n";
+            }
+            
+            mailsInfos.put("" + id, output);
+            //String out = rep.substring(rep.indexOf('\n')+1);
+            
+            //mailsInfos.put("" + id, rep);
+        }
     }
     
     /**
@@ -357,6 +429,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton connectButton;
     private javax.swing.JButton connectUserPasswordButton;
+    private javax.swing.JButton delButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -373,4 +446,5 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     private javax.swing.JTextField serverTextField;
     private javax.swing.JTextField userTextField;
     // End of variables declaration//GEN-END:variables
+    private HashMap<String, String> mailsInfos = new HashMap<String, String>();
 }
