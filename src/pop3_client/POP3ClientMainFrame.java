@@ -6,17 +6,22 @@
 package pop3_client;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import static java.lang.Thread.sleep;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import pop3_client.Model.Client;
 import pop3_client.Model.Connexion;
 import pop3_client.Model.Context;
@@ -41,7 +46,6 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
                 delButton.setEnabled(true);
             }
         });
-        
         
 
         this.addWindowListener(new WindowAdapter(){
@@ -81,6 +85,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         mailDetailsTextView = new javax.swing.JTextArea();
         jSeparator1 = new javax.swing.JSeparator();
         delButton = new javax.swing.JButton();
+        resetButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -140,14 +145,14 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
 
             },
             new String [] {
-                "From", "Object", "Details", "Date"
+                "From", "Object", "Details", "Date", "ID"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false
+                false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -170,6 +175,13 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         delButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 delButtonActionPerformed(evt);
+            }
+        });
+
+        resetButton.setLabel("Reset (0)");
+        resetButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                resetButtonActionPerformed(evt);
             }
         });
 
@@ -214,6 +226,8 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
                         .addContainerGap())))
             .addGroup(layout.createSequentialGroup()
                 .addComponent(delButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(resetButton)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -238,7 +252,9 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(delButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(delButton)
+                    .addComponent(resetButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -322,11 +338,14 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
 
     private void delButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_delButtonActionPerformed
         int id = mailsTableView.getSelectedRow() + 1;
-        //mailDetailsTextView.setText(mailsInfos.get("" + id));
         delButton.setEnabled(false);
         
         launchDel(id);
     }//GEN-LAST:event_delButtonActionPerformed
+
+    private void resetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetButtonActionPerformed
+        launchReset();
+    }//GEN-LAST:event_resetButtonActionPerformed
 
     public void launchStat() {
         sendRequest("STAT");
@@ -355,7 +374,7 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         String response = Context.getInstance().receiveRep();
         writeServerResponse(response);
         
-        HashMap<String, String> infos = utils.parseRetr(response);
+        HashMap<String, String> infos = utils.parseRetr(id, response);
         fillMailsTV(infos);
         storeMailsInfos(id, response);
     }
@@ -364,15 +383,50 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
         sendRequest("DELE " + id);
         String response = Context.getInstance().receiveRep();
         writeServerResponse(response);
+        
+        if(!utils.isError(response)) {
+            DefaultTableModel model = (DefaultTableModel) mailsTableView.getModel();
+            
+            deletedMails.put("" + id, new HashMap<String, String>());
+            deletedMails.get("" + id).put("Object", model.getValueAt(id -1, 1).toString());
+            deletedMails.get("" + id).put("Date", model.getValueAt(id -1, 3).toString());
+            deletedMails.get("" + id).put("Expeditor", model.getValueAt(id -1, 0).toString());
+            deletedMails.get("" + id).put("Body", model.getValueAt(id -1, 2).toString());
+
+            model.removeRow(id - 1);
+            
+            String numberOnly= resetButton.getText().replaceAll("[^0-9]", "");
+            int nbOfDeletedMsg = Integer.parseInt(numberOnly);
+            
+            resetButton.setText("Reset (" + nbOfDeletedMsg + ")");
+        }
     }
     
     public void launchQuit() {
         sendRequest("QUIT");
     }
     
+    public void launchReset() {
+        sendRequest("RSET");
+        
+        String response = Context.getInstance().receiveRep();
+        writeServerResponse(response);
+        
+        if(!utils.isError(response)) {
+            DefaultTableModel model = (DefaultTableModel) mailsTableView.getModel();
+            
+            for(Map.Entry<String, HashMap<String, String>> entry : deletedMails.entrySet()) {
+                String key = entry.getKey();
+                HashMap value = entry.getValue();
+                model.addRow(new Object[]{value.get("Expeditor"), value.get("Object"), value.get("Body"), value.get("Date"), key});
+            }
+            
+        }
+    }
+    
     public void fillMailsTV(HashMap <String, String> infos) {
         DefaultTableModel model = (DefaultTableModel) mailsTableView.getModel();
-        model.addRow(new Object[]{infos.get("Expeditor"), infos.get("Object"), infos.get("Body"), infos.get("Date")});
+        model.addRow(new Object[]{infos.get("Expeditor"), infos.get("Object"), infos.get("Body"), infos.get("Date"), infos.get("ID")});
     }
     
     public void storeMailsInfos(int id, String rep) {
@@ -443,8 +497,11 @@ public class POP3ClientMainFrame extends javax.swing.JFrame {
     private javax.swing.JTextArea outputTextView;
     private javax.swing.JTextField passwordTextField;
     private javax.swing.JTextField portTextField;
+    private javax.swing.JButton resetButton;
     private javax.swing.JTextField serverTextField;
     private javax.swing.JTextField userTextField;
     // End of variables declaration//GEN-END:variables
     private HashMap<String, String> mailsInfos = new HashMap<String, String>();
+    private HashMap<String, HashMap<String, String>> deletedMails = new HashMap<String, HashMap<String, String>>();
+
 }

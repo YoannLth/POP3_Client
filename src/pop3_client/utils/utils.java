@@ -79,7 +79,7 @@ public abstract class utils {
         return nbMessages;
     }
     
-    public static HashMap<String,String> parseRetr(String mess) {
+    public static HashMap<String,String> parseRetr(Integer id, String mess) {
         HashMap ret = new HashMap();
         String lines[] = mess.split("\\r?\\n");
         String[] exp = lines[1].split(" ");
@@ -99,6 +99,7 @@ public abstract class utils {
         ret.put("Date", dateFormated);
         ret.put("Object", objectFormated);
         ret.put("Body", body);
+        ret.put("ID", "" + id);
         
         return ret;
     }
