@@ -11,8 +11,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  *
@@ -20,7 +24,7 @@ import java.util.logging.Logger;
  */
 public class Context
 {
-    private Socket socket;
+    private SSLSocket socket;
     private int port;
     private String ip;
     private String timestamp;
@@ -63,8 +67,9 @@ public class Context
     public void connect()
     {
         try {
-            this.socket = new Socket(this.ip, this.port);
+            this.socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.ip, this.port);
             this.socket.setKeepAlive(true);
+            this.EnableAnonCipherSuite();
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (IOException io) {
@@ -134,4 +139,20 @@ public class Context
             Logger.getLogger(Context.class.getName()).log(Level.SEVERE, null, ex);
         }
     }  
+    
+    public void EnableAnonCipherSuite()
+    {
+        String[] supported = this.socket.getSupportedCipherSuites();
+        List<String> list= new ArrayList<String>();
+
+        for(int i = 0; i < supported.length; i++)
+        {
+            if(supported[i].indexOf("_anon_") > 0)
+            {
+                list.add(supported[i]);
+            }
+        }
+        String[] anonCipherSuitesSupported = list.toArray(new String[0]);
+        this.socket.setEnabledCipherSuites(anonCipherSuitesSupported);
+    }
 }
