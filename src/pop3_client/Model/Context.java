@@ -9,7 +9,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +38,6 @@ public class Context
         return Context.instance;
     }
     
-    public Context()
-    {
-        
-    }
-    
     public void setPort(int port)
     {
         this.port = port;
@@ -64,17 +58,19 @@ public class Context
         return this.timestamp;
     }
     
-    public void connect()
+    public boolean connect()
     {
         try {
             this.socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.ip, this.port);
             this.socket.setKeepAlive(true);
             this.EnableAnonCipherSuite();
+            return true;
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (IOException io) {
             System.out.println(io.getMessage());
         }
+        return false;
     }
     
     public void sendCommand(String cmd)
@@ -88,7 +84,7 @@ public class Context
         } 
         catch (IOException ex)
         {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Context.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
